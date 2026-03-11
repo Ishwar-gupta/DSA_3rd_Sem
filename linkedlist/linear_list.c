@@ -105,7 +105,7 @@ void displayList(){
 
     //traversing one by one 
     printf("Singly linked list are :");
-    while (temp->next != NULL)
+    while (temp != NULL)
     {
         printf("%d ",temp->info);
         temp=temp->next;
