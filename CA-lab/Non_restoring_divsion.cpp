@@ -2,14 +2,15 @@
 #include <cmath>
 using namespace std;
 
-int a = 0, b = 0, c = 0, com[5] = {1,0,0,0,0};
+int a = 0, b = 0, c = 0;
 int anum[5] = {0}, bnum[5] = {0}, anumcp[5] = {0};
-int acomp[5] = {0}, bcomp[5] = {0}, rem[5] = {0}, res[5] = {0};
+int bcomp[5] = {0}, rem[5] = {0}, res[5] = {0};
 
 void binary(int x, int y)
 {
     int r, r2, i;
-    for(i=0;i<5;i++)
+
+    for(i = 0; i < 5; i++)
     {
         r = x % 2;
         x /= 2;
@@ -21,21 +22,20 @@ void binary(int x, int y)
         anumcp[i] = r;
         bnum[i] = r2;
 
-        if(r2 == 0)
-            bcomp[i] = 1;
-        else
-            bcomp[i] = 0;
+        // 1's complement of divisor
+        bcomp[i] = (r2 == 0) ? 1 : 0;
     }
 
-    int carry = 0;
-    for(i=0;i<5;i++)
+    // 2's complement of divisor
+    int carry = 1;
+    for(i = 0; i < 5; i++)
     {
-        res[i] = com[i] + bcomp[i] + carry;
+        res[i] = bcomp[i] + carry;
         carry = res[i] / 2;
         res[i] %= 2;
     }
 
-    for(i=0;i<5;i++)
+    for(i = 0; i < 5; i++)
         bcomp[i] = res[i];
 }
 
@@ -43,46 +43,39 @@ void add(int num[])
 {
     int carry = 0;
 
-    for(int i=0;i<5;i++)
+    for(int i = 0; i < 5; i++)
     {
         res[i] = rem[i] + num[i] + carry;
         carry = res[i] / 2;
         res[i] %= 2;
     }
 
-    for(int i=0;i<5;i++)
+    for(int i = 0; i < 5; i++)
         rem[i] = res[i];
-
-    for(int i=4;i>=0;i--)
-        cout<<rem[i];
-
-    cout<<" : ";
-
-    for(int i=4;i>=0;i--)
-        cout<<anumcp[i];
 }
 
 void shl()
 {
-    for(int i=4;i>0;i--)
-        rem[i] = rem[i-1];
+    for(int i = 4; i > 0; i--)
+        rem[i] = rem[i - 1];
 
     rem[0] = anumcp[4];
 
-    for(int i=4;i>0;i--)
-        anumcp[i] = anumcp[i-1];
+    for(int i = 4; i > 0; i--)
+        anumcp[i] = anumcp[i - 1];
 
     anumcp[0] = 0;
+}
 
-    cout<<"\nSHIFT LEFT: ";
+void display()
+{
+    for(int i = 4; i >= 0; i--)
+        cout << rem[i];
 
-    for(int i=4;i>=0;i--)
-        cout<<rem[i];
+    cout << " : ";
 
-    cout<<" : ";
-
-    for(int i=4;i>=0;i--)
-        cout<<anumcp[i];
+    for(int i = 4; i >= 0; i--)
+        cout << anumcp[i];
 }
 
 int main()
@@ -90,87 +83,83 @@ int main()
     int i;
     int signA, signB;
 
-    cout<<"\t\t******RESTORING DIVISION******\n\n";
-    cout<<"Enter two numbers to divide\n";
-    cout<<"Both numbers should be less than 16 in magnitude\n\n";
+    cout << "\n***** NON-RESTORING DIVISION *****\n";
 
     do
     {
-        cout<<"Enter the dividend: ";
-        cin>>a;
+        cout << "Enter dividend: ";
+        cin >> a;
 
-        cout<<"Enter the divisor: ";
-        cin>>b;
+        cout << "Enter divisor: ";
+        cin >> b;
 
-    } while(abs(a)>=16 || abs(b)>=16 || b==0);
+    } while(abs(a) >= 16 || abs(b) >= 16 || b == 0);
 
-    cout<<"\nExpected Quotient: "<<a/b<<endl;
-    cout<<"Expected Remainder: "<<a%b<<endl;
+    cout << "\nExpected Quotient: " << a / b;
+    cout << "\nExpected Remainder: " << a % b << endl;
 
-    signA = (a<0);
-    signB = (b<0);
+    signA = (a < 0);
+    signB = (b < 0);
 
-    if(signA ^ signB)
-        c = 1;
-    else
-        c = 0;
+    c = signA ^ signB;
 
     int A = abs(a);
     int B = abs(b);
 
-    binary(A,B);
+    binary(A, B);
 
-    cout<<"\n\nUnsigned Binary Equivalents are:\n";
+    cout << "\nInitial Values:\n";
+    display();
 
-    cout<<"A: ";
-    for(i=4;i>=0;i--)
-        cout<<anum[i];
-
-    cout<<"\nB: ";
-    for(i=4;i>=0;i--)
-        cout<<bnum[i];
-
-    cout<<"\nB'+1: ";
-    for(i=4;i>=0;i--)
-        cout<<bcomp[i];
-
-    cout<<"\n\n-->";
-
-    shl();
-
-    for(i=0;i<5;i++)
+    for(i = 0; i < 5; i++)
     {
-        cout<<"\n-->\nSUB B: ";
-        add(bcomp);
+        cout << "\n\nStep " << i + 1;
 
-        if(rem[4]==1)
+        shl();
+        cout << "\nAfter Shift: ";
+        display();
+
+        // Non-restoring logic
+        if(rem[4] == 0)
         {
-            cout<<"\n--> RESTORE\nADD B: ";
-            anumcp[0] = 0;
-            add(bnum);
+            cout << "\nSubtract B: ";
+            add(bcomp);   // subtract
         }
         else
         {
-            anumcp[0] = 1;
+            cout << "\nAdd B: ";
+            add(bnum);    // add
         }
 
-        if(i<4)
-            shl();
+        display();
+
+        // Set quotient bit
+        if(rem[4] == 0)
+            anumcp[0] = 1;
+        else
+            anumcp[0] = 0;
     }
 
-    cout<<"\n----------------------------";
+    // Final correction if remainder is negative
+    if(rem[4] == 1)
+    {
+        cout << "\n\nFinal Correction (Add B): ";
+        add(bnum);
+        display();
+    }
 
-    cout<<"\nSign of result: "<<(c ? "-" : "+");
+    cout << "\n----------------------------";
+    cout << "\nSign of Quotient: " << (c ? "-" : "+");
 
-    cout<<"\nRemainder: ";
-    for(i=4;i>=0;i--)
-        cout<<rem[i];
+    cout << "\nRemainder: ";
+    for(i = 4; i >= 0; i--)
+        cout << rem[i];
 
-    cout<<"\nQuotient: ";
-    for(i=4;i>=0;i--)
-        cout<<anumcp[i];
+    cout << "\nQuotient: ";
+    for(i = 4; i >= 0; i--)
+        cout << anumcp[i];
 
-    cout<<endl;
+    cout << endl;
 
     return 0;
 }
